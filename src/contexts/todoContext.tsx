@@ -49,16 +49,7 @@ type TodoContextValue = {
   handleSortType: (sortName: string) => void;
   sortTodos: (todos: Todo[]) => Todo[];
   searchTodos: () => Todo[];
-  addTodo: (
-    value: string,
-    complexity: number,
-    date: string,
-    time: string,
-    priority: number,
-    tagValue: string,
-    checkList: CheckItem[]
-  ) => void;
-  updateTodo: (todo: Todo) => void;
+  handleTodo: (todo: Todo) => void;
   handleSearch: (searchTerm: string) => void;
   completeTodo: (id: string) => void;
   dueDateColor: (todo: Todo) => string;
@@ -103,14 +94,13 @@ export const TodoProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const getLevelText = (level: number) => {
-    const levelNumber = Number(level);
-    const customText =
-      levelNumber > 6
-        ? `High (${levelNumber}/10)`
-        : levelNumber > 4
-        ? `Moderate(${levelNumber}/10)`
-        : `Low(${levelNumber}/10)`;
-    return customText;
+    if (Number(level) > 6) {
+      return `High (${Number(level)}/10)`;
+    } else if (Number(level) > 4) {
+      return `Moderate(${Number(level)}/10)`;
+    } else {
+      return `Low(${Number(level)}/10)`;
+    }
   };
 
   const handleFilter = (filterName: string) => {
@@ -142,34 +132,7 @@ export const TodoProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const addTodo = (
-    value: string,
-    complexity: number,
-    date: string,
-    time: string,
-    priority: number,
-    tagValue: string,
-    checkList: CheckItem[]
-  ) => {
-    const newTodos = [
-      ...todos,
-      {
-        name: value,
-        isCompleted: false,
-        id: uid(6),
-        percent: 0,
-        complexity: complexity,
-        date: date,
-        time: time,
-        priority: priority,
-        tags: tagValue,
-        checkList: checkList
-      }
-    ];
-    setTodos(newTodos);
-    updateTodoStore(newTodos);
-  };
-  const updateTodo = ({
+  const handleTodo = ({
     id,
     name,
     complexity,
@@ -194,7 +157,7 @@ export const TodoProvider = ({ children }: { children: ReactNode }) => {
       checkList
     };
 
-    const oldTodos = todos.filter((t: any) => t.id !== updatedTodo.id);
+    const oldTodos = todos.filter((t: any) => t.id !== updatedTodo.id) || todos;
     const updatedTodos = [...oldTodos, updatedTodo];
     setTodos(updatedTodos);
     updateTodoStore(updatedTodos);
@@ -211,16 +174,18 @@ export const TodoProvider = ({ children }: { children: ReactNode }) => {
     updateTodoStore(updatedTodos);
   };
   const dueDateColor = (todo: Todo) => {
+    const time = {
+      threeDays: 259200000,
+      oneDay: 86400000
+    };
     const timeRemained =
       Number(new Date(todo.date + " " + todo.time)) - Number(new Date());
-    return timeRemained > 259200000
-      ? "RoyalBlue"
-      : timeRemained > 86400000
-      ? "Orange"
-      : "OrangeRed";
+    if (timeRemained > time.threeDays) return "RoyalBlue";
+    else if (timeRemained > time.oneDay) return "Orange";
+    else return "OrangeRed";
   };
   const dateStyle = (todo: Todo) => {
-    var date = new Date(todo.date + " " + todo.time);
+    const date = new Date(todo.date + " " + todo.time);
 
     return date.toLocaleString("en-US", {
       year: "numeric",
@@ -334,7 +299,6 @@ export const TodoProvider = ({ children }: { children: ReactNode }) => {
   const value: TodoContextValue = {
     todos,
     generateFilters,
-    addTodo,
     completeTodo,
     removeTodo,
     getTodo,
@@ -343,7 +307,7 @@ export const TodoProvider = ({ children }: { children: ReactNode }) => {
     search,
     filters,
     handleFilter,
-    updateTodo,
+    handleTodo,
     getLevelText,
     handleCheck,
     resetStatus,
